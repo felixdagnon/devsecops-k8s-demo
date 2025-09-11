@@ -1,132 +1,118 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "location": {
-            "value": "eastus"
-        },
-        "networkInterfaceName": {
-            "value": "devsecops-cloud801"
-        },
-        "enableAcceleratedNetworking": {
-            "value": true
-        },
-        "networkSecurityGroupName": {
-            "value": "devsecops-cloud-nsg"
-        },
-        "networkSecurityGroupRules": {
-            "value": [
-                {
-                    "name": "allow-all",
-                    "properties": {
-                        "priority": 100,
-                        "protocol": "*",
-                        "access": "Allow",
-                        "direction": "Inbound",
-                        "sourceApplicationSecurityGroups": [],
-                        "destinationApplicationSecurityGroups": [],
-                        "sourceAddressPrefix": "*",
-                        "sourcePortRange": "*",
-                        "destinationAddressPrefix": "*",
-                        "destinationPortRange": "*"
-                    }
-                },
-                {
-                    "name": "default-allow-ssh",
-                    "properties": {
-                        "priority": 1000,
-                        "protocol": "TCP",
-                        "access": "Allow",
-                        "direction": "Inbound",
-                        "sourceApplicationSecurityGroups": [],
-                        "destinationApplicationSecurityGroups": [],
-                        "sourceAddressPrefix": "*",
-                        "sourcePortRange": "*",
-                        "destinationAddressPrefix": "*",
-                        "destinationPortRange": "22"
-                    }
-                }
-            ]
-        },
-        "subnetName": {
-            "value": "default"
-        },
-        "virtualNetworkName": {
-            "value": "devsecops-cloud_group-vnet"
-        },
-        "addressPrefixes": {
-            "value": [
-                "10.0.0.0/16"
-            ]
-        },
-        "subnets": {
-            "value": [
-                {
-                    "name": "default",
-                    "properties": {
-                        "addressPrefix": "10.0.0.0/24"
-                    }
-                }
-            ]
-        },
-        "publicIpAddressName": {
-            "value": "devsecops-cloud-ip"
-        },
-        "publicIpAddressType": {
-            "value": "Static"
-        },
-        "publicIpAddressSku": {
-            "value": "Standard"
-        },
-        "virtualMachineName": {
-            "value": "devsecops-cloud"
-        },
-        "virtualMachineComputerName": {
-            "value": "devsecops-cloud"
-        },
-        "virtualMachineRG": {
-            "value": "devsecops-cloud_group"
-        },
-        "osDiskType": {
-            "value": "StandardSSD_LRS"
-        },
-        "dataDisks": {
-            "value": [
-                {
-                    "lun": 0,
-                    "createOption": "attach",
-                    "caching": "ReadOnly",
-                    "writeAcceleratorEnabled": false,
-                    "id": null,
-                    "name": "devsecops-cloud_DataDisk_0",
-                    "storageAccountType": null,
-                    "diskSizeGB": null,
-                    "diskEncryptionSet": null
-                }
-            ]
-        },
-        "dataDiskResources": {
-            "value": [
-                {
-                    "name": "devsecops-cloud_DataDisk_0",
-                    "sku": "StandardSSD_LRS",
-                    "properties": {
-                        "diskSizeGB": 512,
-                        "creationData": {
-                            "createOption": "empty"
-                        }
-                    }
-                }
-            ]
-        },
-        "virtualMachineSize": {
-            "value": "Standard_D4s_v3"
-        },
-        "adminUsername": {
-            "value": "devsecops"
-        },
-        "adminPassword": {
-            "value": null
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "networkInterfaceName": {
+      "value": "devsecops-cloud801"
+    },
+    "enableAcceleratedNetworking": {
+      "value": true
+    },
+    "networkSecurityGroupName": {
+      "value": "devsecops-cloud-nsg"
+    },
+    "networkSecurityGroupRules": {
+      "value": [
+        {
+          "name": "allow-ssh-from-my-ip",
+          "properties": {
+            "priority": 100,
+            "protocol": "TCP", // 🔹 uniquement TCP pour SSH
+            "access": "Allow",
+            "direction": "Inbound",
+            "sourceApplicationSecurityGroups": [],
+            "destinationApplicationSecurityGroups": [],
+            "sourceAddressPrefix": "91.170.98.133/32", // 🔹 ton IP publique réelle
+            "sourcePortRange": "*",
+            "destinationAddressPrefix": "*",
+            "destinationPortRange": "22"
+          }
         }
+        // ⚠️ La règle "default-allow-ssh" a été supprimée pour sécuriser la VM
+      ]
+    },
+    "subnetName": {
+      "value": "default"
+    },
+    "virtualNetworkName": {
+      "value": "devsecops-cloud_group-vnet"
+    },
+    "addressPrefixes": {
+      "value": [
+        "10.0.0.0/16"
+      ]
+    },
+    "subnets": {
+      "value": [
+        {
+          "name": "default",
+          "properties": {
+            "addressPrefix": "10.0.0.0/24"
+          }
+        }
+      ]
+    },
+    "publicIpAddressName": {
+      "value": "devsecops-cloud-ip"
+    },
+    "publicIpAddressType": {
+      "value": "Static" // 🔹 IP publique fixe conservée
+    },
+    "publicIpAddressSku": {
+      "value": "Standard"
+    },
+    "virtualMachineName": {
+      "value": "devsecops-cloud"
+    },
+    "virtualMachineComputerName": {
+      "value": "devsecops-cloud"
+    },
+    "virtualMachineRG": {
+      "value": "devsecops-cloud_group"
+    },
+    "osDiskType": {
+      "value": "StandardSSD_LRS"
+    },
+    "dataDisks": {
+      "value": [
+        {
+          "lun": 0,
+          "createOption": "attach",
+          "caching": "ReadOnly",
+          "writeAcceleratorEnabled": false,
+          "id": null,
+          "name": "devsecops-cloud_DataDisk_0",
+          "storageAccountType": null,
+          "diskSizeGB": null,
+          "diskEncryptionSet": null
+        }
+      ]
+    },
+    "dataDiskResources": {
+      "value": [
+        {
+          "name": "devsecops-cloud_DataDisk_0",
+          "sku": "StandardSSD_LRS",
+          "properties": {
+            "diskSizeGB": 512,
+            "creationData": {
+              "createOption": "empty"
+            }
+          }
+        }
+      ]
+    },
+    "virtualMachineSize": {
+      "value": "Standard_D4s_v3"
+    },
+    "adminUsername": {
+      "value": "devsecops"
+    },
+    "adminPassword": {
+      "value": null // 🔹 à remplacer par un mot de passe fort ou utiliser une clé SSH
     }
+  }
 }
