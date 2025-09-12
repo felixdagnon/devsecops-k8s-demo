@@ -1,41 +1,38 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven3'   // définis "Maven3" dans Jenkins > Global Tool Configuration
-        jdk 'JDK11'      // idem pour le JDK (ou JDK17 selon ton projet)
-    }
-
     stages {
         stage('Build Artifact') {
             steps {
+                echo "=== Building the project ==="
                 sh "mvn clean package -DskipTests=true"
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
 
-        stage('Unit Tests with JaCoCo') {
+        stage('Unit Tests') {
             steps {
+                echo "=== Running unit tests ==="
                 sh "mvn test"
             }
         }
 
-        stage('JaCoCo Report') {
+        stage('Code Coverage') {
             steps {
-                jacoco(
-                    execPattern: '**/target/jacoco.exec',
-                    classPattern: '**/target/classes',
-                    sourcePattern: '**/src/main/java',
-                    inclusionPattern: '**/*.class',
-                    exclusionPattern: '**/*Test*.class'
-                )
+                echo "=== Running tests with JaCoCo coverage ==="
+                sh "mvn clean test jacoco:report"
+            }
+            post {
+                always {
+                    // Publier le rapport JaCoCo dans Jenkins
+                    jacoco execPattern: 'target/jacoco.exec',
+                           classPattern: 'target/classes',
+                           sourcePattern: 'src/main/java',
+                           inclusionPattern: '**/*.class',
+                           exclusionPattern: '**/*Test*.class'
+                }
             }
         }
     }
-
-    post {
-        always {
-            junit '**/target/surefire-reports/*.xml'  // Publie les résultats JUnit
-        }
-    }
 }
+
