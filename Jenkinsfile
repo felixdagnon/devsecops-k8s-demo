@@ -1,11 +1,20 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKERHUB_CREDENTIALS = 'dockerhub'   // ID des credentials Jenkins
+        DOCKER_IMAGE = "siddharth67/numeric-app"
+    }
+
     stages {
         stage('Build Artifact') {
             steps {
                 echo "=== Building the project ==="
                 sh "mvn clean package -DskipTests=true"
+
+                // Renommer le JAR pour Docker
+                sh "cp target/*.jar target/app.jar"
+
                 archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
@@ -24,7 +33,6 @@ pipeline {
             }
             post {
                 always {
-                    // Publier le rapport JaCoCo dans Jenkins
                     jacoco execPattern: 'target/jacoco.exec',
                            classPattern: 'target/classes',
                            sourcePattern: 'src/main/java',
@@ -37,12 +45,13 @@ pipeline {
         stage('Docker build and push') {
             steps {
                 script {
-                    withDockerRegistry([credentialsId: 'dockerhub', url: 'https://index.docker.io/v1/']) {
+                    echo "=== Logging to DockerHub ==="
+                    docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
                         echo "=== Building Docker image ==="
-                        sh "docker build -t siddharth67/numeric-app:${GIT_COMMIT} ."
+                        sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
 
                         echo "=== Pushing Docker image ==="
-                        sh "docker push siddharth67/numeric-app:${GIT_COMMIT}"
+                        sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
                     }
                 }
             }
