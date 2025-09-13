@@ -2,8 +2,13 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = 'dockerhub'   // ID des credentials Jenkins
-        DOCKER_IMAGE = "siddharth67/numeric-app"
+        DOCKER_IMAGE = "felixdagnon/numeric-app:${GIT_COMMIT}"
+        MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
+    }
+
+    tools {
+        maven 'Maven3'   // Définir dans Jenkins > Global Tool Configuration
+        jdk 'JDK11'      // ou JDK17 selon ton projet
     }
 
     stages {
@@ -11,10 +16,6 @@ pipeline {
             steps {
                 echo "=== Building the project ==="
                 sh "mvn clean package -DskipTests=true"
-
-                // Renommer le JAR pour Docker
-                sh "cp target/*.jar target/app.jar"
-
                 archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
             }
         }
@@ -42,20 +43,30 @@ pipeline {
             }
         }
 
-        stage('Docker build and push') {
+        stage('Docker Build and Push') {
             steps {
-                script {
-                    echo "=== Logging to DockerHub ==="
-                    docker.withRegistry('', DOCKERHUB_CREDENTIALS) {
-                        echo "=== Building Docker image ==="
-                        sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
+                withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
+                    echo "=== Building Docker image ==="
+                    sh "docker build -t ${DOCKER_IMAGE} ."
 
-                        echo "=== Pushing Docker image ==="
-                        sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
-                    }
+                    echo "=== Pushing Docker image ==="
+                    sh "docker push ${DOCKER_IMAGE}"
                 }
             }
         }
     }
+    
+    post {
+        always {
+            echo "=== Pipeline finished ==="
+        }
+        success {
+            echo "=== Pipeline succeeded ==="
+        }
+        failure {
+            echo "=== Pipeline failed ==="
+        }
+    }
 }
+
 
