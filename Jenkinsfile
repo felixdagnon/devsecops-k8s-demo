@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = 'docker-hub'   // ID des credentials Jenkins pour Docker Hub
+        DOCKER_CREDENTIALS = 'docker-hub'   // ID du credential Jenkins pour Docker Hub
         DOCKER_IMAGE = "felixdagnon/numeric-app"
     }
 
@@ -37,7 +37,7 @@ pipeline {
                 script {
                     echo "=== Building Docker image ==="
                     sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
-
+                    
                     echo "=== Pushing Docker image ==="
                     withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: "https://index.docker.io/v1/"]) {
                         sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
@@ -50,17 +50,10 @@ pipeline {
 
         stage('Kubernetes Deployment - DEV') {
             steps {
-                withKubeconfig([credentialsId: 'kubeconfig']) {
-                    echo "=== Updating K8s deployment file with new image ==="
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    echo "=== Deploying to Kubernetes DEV ==="
                     sh "sed -i 's|replace|${DOCKER_IMAGE}:${GIT_COMMIT}|g' k8s_deployment_service.yaml"
-
-                    echo "=== Deployment file after replacement ==="
-                    sh "cat k8s_deployment_service.yaml"
-
-                    echo '=== Applying deployment to Kubernetes ==='
                     sh "kubectl apply -f k8s_deployment_service.yaml"
-
-                    echo "=== Checking deployment rollout status ==="
                     sh "kubectl rollout status deployment/devsecops"
                 }
             }
@@ -72,3 +65,4 @@ pipeline {
         failure { echo "❌ Pipeline failed!" }
     }
 }
+
