@@ -1,14 +1,14 @@
-# Utiliser l'image JDK Alpine pour un conteneur léger
+# Base image Java 8
 FROM openjdk:8-jdk-alpine
 
-# Exposer le port sur lequel Spring Boot écoute
+# Expose port 8080
 EXPOSE 8080
 
-# Définir l'argument pour le JAR à copier
-ARG JAR_FILE=target/numeric-0.0.1.jar
+# Argument JAR_FILE par défaut
+ARG JAR_FILE=target/*.jar
 
-# Copier le JAR dans le conteneur
+# Copier le JAR dans l'image
 COPY ${JAR_FILE} app.jar
 
-# Définir le point d'entrée pour lancer l'application
+# Commande pour lancer Spring Boot
 ENTRYPOINT ["java", "-jar", "/app.jar"]

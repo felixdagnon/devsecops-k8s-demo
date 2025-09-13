@@ -2,20 +2,21 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'docker-hub' // l’ID de tes credentials Jenkins pour Docker Hub
-        IMAGE_NAME = 'siddharth67/numeric-app'
+        DOCKER_CREDENTIALS = 'docker-hub'  // ID du credential Jenkins pour Docker Hub
+        DOCKER_IMAGE = "felixdagnon/numeric-app"
     }
 
     stages {
+
         stage('Build Artifact') {
             steps {
-                echo "=== Building the project ==="
+                echo "=== Building Maven project ==="
                 sh "mvn clean package -DskipTests=true"
-                archiveArtifacts artifacts: 'target/*.jar', followSymlinks: false
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
         }
 
-        stage('Unit Tests & Code Coverage') {
+        stage('Unit Tests & Coverage') {
             steps {
                 echo "=== Running tests with JaCoCo coverage ==="
                 sh "mvn test jacoco:report"
@@ -31,19 +32,25 @@ pipeline {
             }
         }
 
-        stage('Docker Build and Push') {
+        stage('Docker Build & Push') {
             steps {
                 script {
                     echo "=== Building Docker image ==="
-                    docker.build("${IMAGE_NAME}:${GIT_COMMIT}", "-f Dockerfile .")
-
+                    sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
+                    
                     echo "=== Pushing Docker image ==="
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${IMAGE_NAME}:${GIT_COMMIT}").push()
+                    withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: "https://index.docker.io/v1/"]) {
+                        sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
+                        sh "docker tag ${DOCKER_IMAGE}:${GIT_COMMIT} ${DOCKER_IMAGE}:latest"
+                        sh "docker push ${DOCKER_IMAGE}:latest"
                     }
                 }
             }
         }
     }
-}
 
+    post {
+        success { echo "✅ Pipeline finished successfully!" }
+        failure { echo "❌ Pipeline failed!" }
+    }
+}
