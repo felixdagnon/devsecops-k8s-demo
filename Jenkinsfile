@@ -33,6 +33,17 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker build and push') {
+            steps {
+                echo "=== Building Docker image ==="
+                sh "docker build -t siddharth67/numeric-app:${GIT_COMMIT} ."
+
+                echo "=== Pushing Docker image ==="
+                sh "docker push siddharth67/numeric-app:${GIT_COMMIT}"
+            }
+        }
     }
 }
+
 
