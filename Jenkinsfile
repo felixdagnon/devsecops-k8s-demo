@@ -37,13 +37,23 @@ pipeline {
                 script {
                     echo "=== Building Docker image ==="
                     sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
-                    
+
                     echo "=== Pushing Docker image ==="
                     withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: "https://index.docker.io/v1/"]) {
                         sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
                         sh "docker tag ${DOCKER_IMAGE}:${GIT_COMMIT} ${DOCKER_IMAGE}:latest"
                         sh "docker push ${DOCKER_IMAGE}:latest"
                     }
+                }
+            }
+        }
+
+        stage('Kubernetes Deployment - DEV') {
+            steps {
+                withKubeconfig([credentialsId: 'kubeconfig']) {
+                    echo "=== Updating K8s deployment file with new image ==="
+                    sh "sed -i 's|replace|${DOCKER_IMAGE}:${GIT_COMMIT}|g' k8s_deployment_service.yaml"
+                    sh "kubectl apply -f k8s_deployment_service.yaml"
                 }
             }
         }
