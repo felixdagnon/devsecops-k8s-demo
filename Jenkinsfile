@@ -2,13 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "felixdagnon/numeric-app:${GIT_COMMIT}"
-        MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
-    }
-
-    tools {
-        maven 'Maven3'   // Définir dans Jenkins > Global Tool Configuration
-        jdk 'JDK11'      // ou JDK17 selon ton projet
+        DOCKER_CREDENTIALS = 'docker-hub'  // ID des credentials DockerHub configurés dans Jenkins
+        IMAGE_NAME = "siddharth67/numeric-app"
     }
 
     stages {
@@ -45,28 +40,17 @@ pipeline {
 
         stage('Docker Build and Push') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
-                    echo "=== Building Docker image ==="
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-
-                    echo "=== Pushing Docker image ==="
-                    sh "docker push ${DOCKER_IMAGE}"
+                echo "=== Building and pushing Docker image ==="
+                script {
+                    withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: "https://index.docker.io/v1/"]) {
+                        sh "docker build -t ${IMAGE_NAME}:${GIT_COMMIT} ."
+                        sh "docker push ${IMAGE_NAME}:${GIT_COMMIT}"
+                    }
                 }
             }
         }
     }
-    
-    post {
-        always {
-            echo "=== Pipeline finished ==="
-        }
-        success {
-            echo "=== Pipeline succeeded ==="
-        }
-        failure {
-            echo "=== Pipeline failed ==="
-        }
-    }
 }
+
 
 
