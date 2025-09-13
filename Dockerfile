@@ -1,14 +1,14 @@
-# Utilise une image légère OpenJDK 8
+# Utiliser l'image JDK Alpine pour un conteneur léger
 FROM openjdk:8-jdk-alpine
 
-# Expose le port sur lequel l'application Spring Boot tourne
+# Exposer le port sur lequel Spring Boot écoute
 EXPOSE 8080
 
-# Définit le nom du JAR généré par Maven
+# Définir l'argument pour le JAR à copier
 ARG JAR_FILE=target/numeric-0.0.1.jar
 
-# Copie le JAR dans l'image
+# Copier le JAR dans le conteneur
 COPY ${JAR_FILE} app.jar
 
-# Commande pour lancer l'application
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Définir le point d'entrée pour lancer l'application
+ENTRYPOINT ["java", "-jar", "/app.jar"]

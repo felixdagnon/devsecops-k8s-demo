@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = 'docker-hub'   // Nom exact de ton credential Jenkins
+        DOCKER_CREDENTIALS_ID = 'docker-hub' // l’ID de tes credentials Jenkins pour Docker Hub
+        IMAGE_NAME = 'siddharth67/numeric-app'
     }
 
     stages {
@@ -14,17 +15,10 @@ pipeline {
             }
         }
 
-        stage('Unit Tests') {
-            steps {
-                echo "=== Running unit tests ==="
-                sh "mvn test"
-            }
-        }
-
-        stage('Code Coverage') {
+        stage('Unit Tests & Code Coverage') {
             steps {
                 echo "=== Running tests with JaCoCo coverage ==="
-                sh "mvn clean test jacoco:report"
+                sh "mvn test jacoco:report"
             }
             post {
                 always {
@@ -39,12 +33,17 @@ pipeline {
 
         stage('Docker Build and Push') {
             steps {
-                echo "=== Building and pushing Docker image ==="
-                withDockerRegistry([credentialsId: "${DOCKER_CREDENTIALS}", url: ""]) {
-                    sh "docker build -t siddharth67/numeric-app:${GIT_COMMIT} ."
-                    sh "docker push siddharth67/numeric-app:${GIT_COMMIT}"
+                script {
+                    echo "=== Building Docker image ==="
+                    docker.build("${IMAGE_NAME}:${GIT_COMMIT}", "-f Dockerfile .")
+
+                    echo "=== Pushing Docker image ==="
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
+                        docker.image("${IMAGE_NAME}:${GIT_COMMIT}").push()
+                    }
                 }
             }
         }
     }
 }
+
